@@ -1,0 +1,414 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Welcome to the Survey!</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> 
+        <script src="jspsych-4.3/jspsych.js"></script> 
+        <script src="jspsych-4.3/plugins/jspsych-text.js"></script>
+        <script src="jspsych-4.3/plugins/jspsych-survey-text.js"></script>
+        <script src="jspsych-4.3/plugins/jspsych-single-stim.js"></script>
+        <script src="jspsych-4.3/plugins/jspsych-categorize.js"></script>
+        <script src="FileSaver.js-master/FileSaver.js"></script>  
+        <!-- use the plugin for multiple trial elemets 
+        <script src="jspsych-4.3/plugins/jspsych-multi-stim-multi-response.js"></script>
+        -->
+        <link href="jspsych-4.3/css/jspsych.css" rel="stylesheet" type="text/css"</link> 
+  </head>
+
+  <body>
+  <div id="indicator"></div> 
+      <script>
+
+      function inArray(item, array) { 
+            for(var x=0; x<array.length;x++){
+                if(array[x] == item){return true}
+            }
+            return false
+        };
+
+    function subjcheck(subj){
+        if(subj[0] != "s"){
+            subj = "s" + subj;
+        }
+        nums = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+        for(i = 1; i < subj.length; i++) {
+            if(!(inArray(subj[i], nums))){
+                nsubj = prompt("Subject ID must consist of an s followed by only numbers. Please enter a valid subject ID:", "s999");
+                return subjcheck(nsubj);
+            }
+        }
+        return subj;
+
+    }
+
+    function sentcheck(sent){
+        opts = ["a", "d", "A", "D", "adv", "det", "Adv", "Det", "ADV", "DET"]
+        if(!inArray(sent, opts)){
+            nsent = prompt("You must enter 'a' or 'd':", "");
+            return sentcheck(nsent);
+        }
+        return sent;
+
+    }
+
+
+
+    var subj = prompt("Please enter Subject ID", "s999");
+    subj = subjcheck(subj);
+    var sent = prompt("Please enter a condition (a or d):", "");
+    sent = sentcheck(sent);
+    if(sent[0] == "a" || sent[0]=="A"){
+        sentType = "adv"
+    } else {
+        sentType = "det"
+    }
+    jsPsych.data.addProperties({subject: subj});
+    jsPsych.data.addProperties({cond: sentType});
+
+      var indicator = document.getElementById("indicator");
+        /* define instructions block */
+        var instructions_block = {
+            type: "text",
+            text: "<p style='font-size:37px; text-align:center'; margin-top:50%'>Hello! Welcome to the experiment!</p>" + 
+                "<p style='font-size:20px; text-align:center'; margin-top:50%'>In this experiment, we're going to have you learn the meaning of some made-up words. The first word is '<strong>gleeb</strong>'.</p>" + "<p style='font-size:20px; text-align:center'; margin-top:50%'>This experiment will have three parts. First, you'll see examples of what 'gleeb' means. Then, you'll answer questions to test your understanding. Then, you'll see a new word that you will answer questions about.</p>" + "<p style='font-size:20px; text-align:center'; margin-top:50%'>In order to teach you what 'gleeb' means, we'll give you some examples of how it can be used in a sentence. For the first part of the experiment, you'll see some pictures one at a time. Below each picture will be a sentence that describes the picture.</p>" + "<p style='font-size:20px; text-align:center'; margin-top:50%'>Your job is to learn the meaning of 'gleeb' based on the descriptions.</p>" +
+            "<p style='font-size:30px; text-align:center'; margin-top:50%'>Ready? Press <strong>spacebar</strong> to begin.</p>",
+            timing_post_trial: 1000,
+            cont_key: ['space']
+        };
+
+        var fix_block = {
+            type: 'single-stim',
+            stimuli: ['<p style="font-size:128px; text-align:center; margin-top:50%">+</p>'],
+            timing_response: 200, // how long to show the fixation for in ms
+            response_ends_trial: false,
+            choices: 'none', // no valid keys
+            timing_post_trial: 0, // no gap between fixation and image
+            is_html: true
+        };
+
+        var experiment = [];
+        experiment.push(instructions_block);
+
+        var response = "<p style='font-size:60px; text-align:center; margin-top:50%'>?</p>" + 
+            "<p style='font-size:20px; text-align:center'>Press <strong>f</strong> for yes, <strong>j</strong> for no.</p>";
+
+        var images = [];
+
+        var ratios = ['025-', '2550-', '5075-', '75-'];
+        var color = ['red', 'blue', 'green', 'purple'];
+
+        for(var j=0; j<ratios.length;j++){
+            for(var k=0; k<color.length;k++){
+                imgstring = "imagesDK/"+ratios[j]+color[k]+".jpg";
+                images.push(imgstring);
+            }
+        }
+
+        function updateLoadedCount(nLoaded) { 
+            var percentcomplete = nLoaded / images.length * 100;
+            console.log('Loaded '+percentcomplete+'% of experiment');
+        };
+
+        jsPsych.preloadImages(images, function(){ startExperiment(); }, function(nLoaded){ updateLoadedCount(nLoaded); });
+
+        //initlist4 = jsPsych.randomization.repeat(initlist4, 1);
+
+        //Making exposure lists:
+        var exPos = "<p style='font-size:37px; text-align:center'>The sphere is <strong>gleeb</strong> ";// + c + "</p>"
+        var exNeg = "<p style='font-size:37px; text-align:center'>It's not true that the sphere is <strong>gleeb</strong> ";// + c + "</p>"
+
+        var exp_gleeblist = [];
+        var exp_notgleeblist = [];
+
+        var gleebratios = ['025-', '2550-'];
+        var notgleebratios = ['5075-', '75-'];
+
+        //one of each color for gleeb and not gleeb
+        for(var k=0; k<color.length;k++){
+            var rat = gleebratios[Math.floor(Math.random() * gleebratios.length)];
+            imgstring = "imagesDK/"+rat+color[k]+".jpg";
+            exposurestring = exPos + color[k]+ "</p>";
+            exp_gleeblist.push([imgstring, exposurestring]);
+            var rat = notgleebratios[Math.floor(Math.random() * notgleebratios.length)];
+            imgstring = "imagesDK/"+rat+color[k]+".jpg";
+            exposurestring = exNeg + color[k]+ "</p>";
+            exp_notgleeblist.push([imgstring, exposurestring]);
+
+        }
+
+        //Pick a random positive trial, then randomize the rest and add them afterwards
+        exp_gleeblist = jsPsych.randomization.repeat(exp_gleeblist, 1);
+        var exposurelist = [exp_gleeblist.pop()];
+        var templist = exp_gleeblist.concat(exp_notgleeblist);
+        templist = jsPsych.randomization.repeat(templist, 1);
+        exposurelist = exposurelist.concat(templist);
+
+        //EXPOSURE TRIALS:
+
+        for(var x=0; x<exposurelist.length; x++){
+            var exposure_block = {
+                type: 'single-stim',
+                stimuli: exposurelist[x][0],
+                choices: ['space'],
+                prompt: exposurelist[x][1]+"<p style='font-size:20px; text-align:center'><em>Press spacebar to continue</em></p>",
+                //is_html: true,
+                timing_post_trial: 200
+            };
+
+            experiment.push(fix_block);
+            experiment.push(exposure_block);
+        }
+
+        var instructions_block = {
+            type: "text",
+            text: "<p style='font-size:20px; text-align:center'; margin-top:50%'>In the next phase of the experiment, you will have to answer questions using the word 'gleeb.' You'll receive feedback after each trial.</p>" +
+            "<p style='font-size:30px; text-align:center'; margin-top:50%'>Ready? Press <strong>spacebar</strong> to begin.</p>",
+            timing_post_trial: 1000,
+            cont_key: ['space']
+        };
+        experiment.push(instructions_block);
+
+        //TRAINING LISTS:
+
+        var trQuestion = "<p style='font-size:37px; text-align:center'>Is the sphere <strong>gleeb</strong> ";
+
+        var tr_gleeblist = [];
+        var tr_notgleeblist = [];
+
+        var gleebratios = ['025-', '2550-'];
+        var notgleebratios = ['5075-', '75-'];
+
+        var templist = ['', '', '', '']
+
+        //one of each color for gleeb and not gleeb
+        //The format of the lists is: [image path, sentence, color name, correctkey]
+        for(var k=0; k<color.length;k++){
+            for(var j=0; j<gleebratios.length;j++){
+                imgstring = "imagesDK/"+gleebratios[j]+color[k]+".jpg";
+                trainingstring = trQuestion + color[k]+ "?</p>";
+                tr_gleeblist.push([imgstring, trainingstring, color[k], 70]);
+            }
+            for(var j=0; j<notgleebratios.length;j++){
+                imgstring = "imagesDK/"+notgleebratios[j]+color[k]+".jpg";
+                trainingstring = trQuestion + color[k]+ "?</p>";
+                tr_notgleeblist.push([imgstring, trainingstring, color[k], 74]);
+            }
+        }
+
+        //Pick a random trial based on whether it's gleeb or not gleeb
+        //Make sure each trial isn't one from a previous color
+        var tr_colors = []
+        var tr_settrials = jsPsych.randomization.sample(tr_gleeblist, 2, true);
+        while(tr_settrials[0][2]==tr_settrials[1][2]){
+                tr_settrials[1] = jsPsych.randomization.sample(tr_gleeblist, 1, true)[0];
+        }
+        tr_colors.push(tr_settrials[0][2]);
+        tr_colors.push(tr_settrials[1][2]);
+        var tr_notgleebtrial = jsPsych.randomization.sample(tr_notgleeblist, 1, true)[0];
+        while(inArray(tr_notgleebtrial[2], tr_colors)){
+                tr_notgleebtrial = jsPsych.randomization.sample(tr_notgleeblist, 1, true)[0];
+        }
+        tr_settrials.push(tr_notgleebtrial);
+        tr_colors.push(tr_notgleebtrial[2]);
+        var tr_notgleebtrial = jsPsych.randomization.sample(tr_notgleeblist, 1, true)[0]
+        while(inArray(tr_notgleebtrial[2], tr_colors)){
+                tr_notgleebtrial = jsPsych.randomization.sample(tr_notgleeblist, 1, true)[0];
+        }
+        tr_settrials.push(tr_notgleebtrial);
+        tr_colors.push(tr_notgleebtrial[2]);
+
+        //commented lines for checking the randomization
+        //alert(tr_settrials.length)
+        //alert(tr_settrials)
+        //alert(tr_colors)
+/*
+        var training_stims = [];
+        var training_keys = [];
+        var training_prompts = []
+
+        training_trials = tr_gleeblist.concat(tr_notgleeblist);
+        for(var x=0; x<training_trials.length;x++){
+            var training_stims.push(training_trials[x][0]);
+            var training_keys.push(training_trials[x][3]);
+            var training_prompts.push(training_trials[x][1]);
+        }
+*/        
+        //Create a timeline list to use in loop_feedback; it should just iterate through that list until incorrectanswers hits 0
+        //Also, look into randomizing trial order within a block. I know that exists.
+        //for(var x=0)
+        tr_settrials = jsPsych.randomization.shuffle(tr_settrials);
+        //var randstim = jsPsych.randomization.shuffle(training_trials, 1, true)[0];
+
+        //TRAINING TRIALS:
+        var incorrectanswers = 0;
+        for(var x=0; x<tr_settrials.length;x++){
+            var feedback_trial = {
+                type: 'categorize',
+                stimuli: [tr_settrials[x][0]],
+                key_answer: [tr_settrials[x][3]],
+                choices: [70, 74],
+                correct_text: "<p style='font-size:37px; text-align:center'><em>You got it!</em></p>",
+                incorrect_text: "<p style='font-size:37px; text-align:center'><em>Nope, that wasn't correct. Let's try again.</em></p>",
+                prompt: tr_settrials[x][1]+"<p style='font-size:20px; text-align:center'><em>Press <strong>'f'</strong> for yes and <strong>'j'</strong> for no.</em></p>",
+                timing_feedback_duration: 2000,
+                data: { correctkey: tr_settrials[x][3]},
+                on_finish: function() {
+                        var t = jsPsych.data.getLastTrialData();
+                        var isCorrect = (t.correctkey == t.key_press);
+                        jsPsych.data.addDataToLastTrial({isCorrect: isCorrect});
+                        //if(!t.correct){
+                        //    incorrectanswers = incorrectanswers + 1;
+                        //};
+                }
+            };
+            experiment.push(feedback_trial);
+        };
+/*
+        var loop_feedback = {
+                type: 'categorize',
+                stimuli: ,
+                key_answer: randstim[3],
+                choices: [70, 74],
+                correct_text: "<p class='prompt'>You got it!</p>",
+                incorrect_text: "<p class='prompt'>Nope, that wasn't correct. Let's try again.</p>",
+                prompt: training_trials[0][1],
+                data: {correctkey: training_trials[0][3]},
+                timeline = [
+                ]
+                on_finish: function() {
+                        var t = jsPsych.data.getLastTrialData();
+                        if(!t.correct){
+                            incorrectanswers = incorrectanswers + 1;
+                        } else {incorrectanswers = incorrectanswers - 1;};
+                        if(incorrectanswers<=0){
+                            jspsych.endCurrentTimeline()
+                        }
+                }
+            }
+
+        //Use the loopnode to activate if the categorization is false? Or just try endcurrenttimeline???
+
+        var while_loop_chunk = {
+          chunk_type: 'while',
+          timeline: [loop_feedback],
+          continue_function: function(){
+            if(incorrectanswers>=1) {
+              randstim = jsPsych.randomization.shuffle(training_trials, 1, true)[0];
+              alert(incorrectanswers)
+              return true; // continue the loop
+            } else {
+              return false; // end the loop
+            }
+          }
+        }
+*/
+        //experiment.push(loop_feedback);
+        //experiment.push(while_loop_chunk);
+        //experiment.push(fix_block);
+
+
+
+        var instructions_block = {
+            type: "text",
+            text: "<p style='font-size:20px; text-align:center'; margin-top:50%'>This is the last phase of the experiment. In this phase, you will answer questions with a novel word. <strong>This time, you are being asked to make your best guess about what the word means, without any feedback.</strong> Please make your <strong>best guess</strong> about the answer.</p>" +
+            "<p style='font-size:30px; text-align:center'; margin-top:50%'>Ready? Press <strong>spacebar</strong> to begin.</p>",
+            timing_post_trial: 1000,
+            cont_key: ['space']
+        };
+        experiment.push(instructions_block);
+
+        //TEST TRIALS
+        if(sentType == "adv"){
+            testSentence = "<p style='font-size:37px; text-align:center'>The sphere is <strong>gloop</strong> ";
+        } else { testSentence = "<p style='font-size:37px; text-align:center'><strong>Gloop</strong> of the sphere is "; }
+
+        var test_gleeblist = [];
+        var test_notgleeblist = [];
+
+        var gleebratios = ['025-', '2550-'];
+        var notgleebratios = ['5075-', '75-'];
+
+        //one of each color for gleeb and not gleeb
+        for(var k=0; k<color.length;k++){
+            var rat = gleebratios[Math.floor(Math.random() * gleebratios.length)];
+            imgstring = "imagesDK/"+rat+color[k]+".jpg";
+            teststring = testSentence + color[k]+ ".</p>";
+            test_gleeblist.push([imgstring, teststring, true]);
+            var rat = notgleebratios[Math.floor(Math.random() * notgleebratios.length)];
+            imgstring = "imagesDK/"+rat+color[k]+".jpg";
+            teststring = testSentence + color[k]+ ".</p>";
+            test_notgleeblist.push([imgstring, teststring, false]);
+
+        };
+
+
+        testTrials = test_gleeblist.concat(test_notgleeblist);
+        testTrials = jsPsych.randomization.shuffle(testTrials);
+
+
+        for(var x=0;x<testTrials.length;x++){
+            var test_block = {
+                type: 'single-stim',
+                stimuli: testTrials[x][0],
+                choices: ['f', 'j'],
+                prompt: testTrials[x][1]+"<p style='font-size:20px; text-align:center'><em>Press <strong>'f'</strong> for yes and <strong>'j'</strong> for no.</em></p>",
+                timing_post_trial: 200,
+                data: {isGleeb: testTrials[x][2] }
+            };
+
+            experiment.push(fix_block);
+            experiment.push(test_block);
+        }
+          
+    /* define survey block */
+    var survey_block = {
+        type: 'survey-text',
+        questions: [["<p>That's it! Before you go, please consider answering these optional questions about your experience in this study:</p> What did you think 'gloop' meant?", "Was there anything challenging about this task?", "Anything else you want us to know?"]]
+    };
+
+    experiment.push(survey_block);
+
+    var finish_block = {
+        type: 'text',
+        text: ["<p style='text-align:center; margin-top:50%'>That's all! Thanks for participating!</p>"],
+        cont_key: ['1'],
+        is_html: true
+    };
+
+    experiment.push(finish_block)
+          
+    function subjcheck(subj){
+        if(subj[0] != "s"){
+            subj = "s" + subj;
+        }
+        nums = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+        for(i = 1; i < subj.length; i++) {
+            if(!(nums.indexOf(subj[i]) > -1)) {
+                nsubj = prompt("Subject ID must consist of an s followed by only numbers. Please enter a valid subject ID:", "s999");
+                return subjcheck(nsubj);
+            }
+        }
+        return subj;
+
+    }
+
+
+    /* start the experiment */
+    /* embedded in "startExperiment" function for preloadImages */ 
+    function startExperiment(){
+        jsPsych.init({
+            experiment_structure: experiment,
+            /* the below prints the data to the screen */
+            on_finish: function() {
+                //jsPsych.data.displayData('csv');
+                var dat = jsPsych.data.dataAsCSV();
+                var blob = new Blob([dat], {type: "text/plain;charset=utf-8"});
+                saveAs(blob, subj + ".csv");
+             } 
+        });
+    }
+          
+      </script>
+      
+  </body>
+</html>
