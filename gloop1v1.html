@@ -2,24 +2,24 @@
 <html>
   <head>
     <title>Welcome to the Survey!</title>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> 
-        <script src="jspsych-4.3/jspsych.js"></script> 
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script src="jspsych-4.3/jspsych.js"></script>
         <script src="jspsych-4.3/plugins/jspsych-text.js"></script>
         <script src="jspsych-4.3/plugins/jspsych-survey-text.js"></script>
         <script src="jspsych-4.3/plugins/jspsych-single-stim.js"></script>
         <script src="jspsych-4.3/plugins/jspsych-categorize.js"></script>
-        <script src="FileSaver.js-master/FileSaver.js"></script>  
-        <!-- use the plugin for multiple trial elemets 
+        <script src="FileSaver.js-master/FileSaver.js"></script>
+        <!-- use the plugin for multiple trial elemets
         <script src="jspsych-4.3/plugins/jspsych-multi-stim-multi-response.js"></script>
         -->
-        <link href="jspsych-4.3/css/jspsych.css" rel="stylesheet" type="text/css"</link> 
+        <link href="jspsych-4.3/css/jspsych.css" rel="stylesheet" type="text/css"</link>
   </head>
 
   <body>
-  <div id="indicator"></div> 
+  <div id="indicator"></div>
       <script>
 
-      function inArray(item, array) { 
+      function inArray(item, array) {
             for(var x=0; x<array.length;x++){
                 if(array[x] == item){return true}
             }
@@ -42,7 +42,7 @@
     }
 
     function sentcheck(sent){
-        opts = ["a", "d", "A", "D", "adv", "det", "Adv", "Det", "ADV", "DET"]
+        opts = ["a", "d"]
         if(!inArray(sent, opts)){
             nsent = prompt("You must enter 'a' or 'd':", "");
             return sentcheck(nsent);
@@ -69,7 +69,7 @@
         /* define instructions block */
         var instructions_block = {
             type: "text",
-            text: "<p style='font-size:37px; text-align:center'; margin-top:50%'>Hello! Welcome to the experiment!</p>" + 
+            text: "<p style='font-size:37px; text-align:center'; margin-top:50%'>Hello! Welcome to the experiment!</p>" +
                 "<p style='font-size:20px; text-align:center'; margin-top:50%'>In this experiment, we're going to have you learn the meaning of some made-up words. The first word is '<strong>gleeb</strong>'.</p>" + "<p style='font-size:20px; text-align:center'; margin-top:50%'>This experiment will have three parts. First, you'll see examples of what 'gleeb' means. Then, you'll answer questions to test your understanding. Then, you'll see a new word that you will answer questions about.</p>" + "<p style='font-size:20px; text-align:center'; margin-top:50%'>In order to teach you what 'gleeb' means, we'll give you some examples of how it can be used in a sentence. For the first part of the experiment, you'll see some pictures one at a time. Below each picture will be a sentence that describes the picture.</p>" + "<p style='font-size:20px; text-align:center'; margin-top:50%'>Your job is to learn the meaning of 'gleeb' based on the descriptions.</p>" +
             "<p style='font-size:30px; text-align:center'; margin-top:50%'>Ready? Press <strong>spacebar</strong> to begin.</p>",
             timing_post_trial: 1000,
@@ -89,7 +89,7 @@
         var experiment = [];
         experiment.push(instructions_block);
 
-        var response = "<p style='font-size:60px; text-align:center; margin-top:50%'>?</p>" + 
+        var response = "<p style='font-size:60px; text-align:center; margin-top:50%'>?</p>" +
             "<p style='font-size:20px; text-align:center'>Press <strong>f</strong> for yes, <strong>j</strong> for no.</p>";
 
         var images = [];
@@ -104,7 +104,7 @@
             }
         }
 
-        function updateLoadedCount(nLoaded) { 
+        function updateLoadedCount(nLoaded) {
             var percentcomplete = nLoaded / images.length * 100;
             console.log('Loaded '+percentcomplete+'% of experiment');
         };
@@ -232,7 +232,7 @@
             var training_keys.push(training_trials[x][3]);
             var training_prompts.push(training_trials[x][1]);
         }
-*/        
+*/
         //Create a timeline list to use in loop_feedback; it should just iterate through that list until incorrectanswers hits 0
         //Also, look into randomizing trial order within a block. I know that exists.
         //for(var x=0)
@@ -359,7 +359,7 @@
             experiment.push(fix_block);
             experiment.push(test_block);
         }
-          
+
     /* define survey block */
     var survey_block = {
         type: 'survey-text',
@@ -376,7 +376,7 @@
     };
 
     experiment.push(finish_block)
-          
+
     function subjcheck(subj){
         if(subj[0] != "s"){
             subj = "s" + subj;
@@ -394,7 +394,7 @@
 
 
     /* start the experiment */
-    /* embedded in "startExperiment" function for preloadImages */ 
+    /* embedded in "startExperiment" function for preloadImages */
     function startExperiment(){
         jsPsych.init({
             experiment_structure: experiment,
@@ -404,11 +404,11 @@
                 var dat = jsPsych.data.dataAsCSV();
                 var blob = new Blob([dat], {type: "text/plain;charset=utf-8"});
                 saveAs(blob, subj + ".csv");
-             } 
+             }
         });
     }
-          
+
       </script>
-      
+
   </body>
 </html>
